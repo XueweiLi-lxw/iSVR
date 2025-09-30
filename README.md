@@ -1,14 +1,17 @@
-# iSVR
+# iSVR 
 Gene-environment interaction testing and prediction based on support vector regression
 
+** Implementation **
 
 Overview
+
 
 This project improves upon the QMTSVR model proposed by Alves et al. (2023) by providing new implementations of the iSVR model. Key enhancements include optimized genetic algorithm hyperparameter search and added interaction detection capabilities.
 
 
 
 1. Core Functions
+
 isvr.GA: Uses genetic algorithm to find optimal hyperparameters for the iSVR model
 
 isvr.fit: Trains the iSVR model using optimized hyperparameters
@@ -17,16 +20,20 @@ Interaction Detection: Significance testing for interaction effects based on Sco
 
 
 2. Environment Requirements
+   
 Encoding: UTF-8
 
 Dependencies:
 
 · CompQuadForm package (for Davies function)
+
 · qmtsvr package (Improvements based on this package)
+
 · Standard R packages：R 4.5.1
 
 
 3. Installation and Setup
+
 #Remember to properly install devtools first
 library(devtools)
 install_github('alvesand/qmtsvr')
@@ -547,6 +554,7 @@ isvr.GA = function(Y, X, Z, D, w = w, hyper,tgTrait, ngen, popsize, mut_rate, cr
 
 
 5. TEST EXAMPLE
+
  ####Given phenotype(y), covariates(X), interactions(S)
 
   hyper_st = list(c("C",0.1,4,128), c("eps",0.0001,0.1,128), c("b1",0.2,5,128))
@@ -585,7 +593,10 @@ isvr.GA = function(Y, X, Z, D, w = w, hyper,tgTrait, ngen, popsize, mut_rate, cr
 
 Reference
 
+
 Alves, A.A.C., Rosa, G.J.M. (2022). (Quasi) multi-task support vector regression for genomic prediction of complex traits. [accessed Oct 2022]. https://alvesand.netlify.app/qmtsvr_doc.html.
+
+
 Alves, A. A. C., Fernandes, A. F. A., Lopes, F. B., Breen, V., Hawken, R., Gianola, D., and Rosa, G. J. D. M. (2023). (Quasi) multitask support vector regression with heuristic hyperparameter optimization for whole-genome prediction of complex traits: a case study with carcass traits in broilers. G3: Genes, Genomes, Genetics 13,, jkad109, https://doi.org/10.1093/g3journal/jkad109
 
 
