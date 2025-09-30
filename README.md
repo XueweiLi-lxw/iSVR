@@ -1,5 +1,7 @@
 # iSVR
 Gene-environment interaction testing and prediction based on support vector regression
+
+
 Overview
 
 This project improves upon the QMTSVR model proposed by Alves et al. (2023) by providing new implementations of the iSVR model. Key enhancements include optimized genetic algorithm hyperparameter search and added interaction detection capabilities.
