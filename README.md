@@ -35,15 +35,23 @@ Dependencies:
 3. Installation and Setup
 
 #Remember to properly install devtools first
+
 library(devtools)
+
 install_github('alvesand/qmtsvr')
 
 install.packages("CompQuadForm")
+
 library(CompQuadForm)
+
 library(usethis)
+
 library(devtools)
+
 library(kernlab)
+
 library(MASS)
+
 
 
 4. Function
@@ -58,6 +66,7 @@ isvr.fit = function(Y, X, Z, w, set_hyper, D, verbose, vardiag){
   #-----------------------------#
   
   #--------- Normalizes y to lie between 0 and 1 ----------------------#
+  
   normalize <- function(x) {
     num <- x - min(x, na.rm = T)
     denom <- max(x, na.rm = T) - min(x, na.rm = T)
@@ -69,11 +78,15 @@ isvr.fit = function(Y, X, Z, w, set_hyper, D, verbose, vardiag){
   N = nrow(Y)
   
   if (missing(verbose)==T){verbose=F}
+  
   if(missing(vardiag)==T){vardiag = F}
+  
   if(typeof(vardiag)!="logical"){stop("Error ... vardiag must be T or F")}
+  
   if(verbose == T){welcome()}
   
   if(missing(X)==F){p = ncol(X)}
+  
   if(ntrait>1){
     nb = ntrait*(ntrait+1)/2
     nr = ntrait*(ntrait+1)/2 - ntrait
@@ -262,21 +275,34 @@ isvr.GA = function(Y, X, Z, D, w = w, hyper,tgTrait, ngen, popsize, mut_rate, cr
   BinToDec <- function(x){
     sum(2^(which(rev(unlist(strsplit(as.character(x), "")) == 1))-1))+1
   }
+  
   #*************************************************************************#
   
   popsize = popsize
+  
   pop_average = NULL
+  
   best_average = NULL
+  
   pop = NULL
+  
   gen = 0
+  
   hyper = hyper
+  
   cost = cost
+  
   if(length(nfolds)==0){nfolds=3}
+  
   if(missing(custom_val)==T&val_pop=="custom"){stop("Error... Please provide a valid array for custom validation pop!")}
+  
   if(vartype=="continuous"&cost!="rmse"&cost!="cor"&cost!="mae"){stop("Error... Please provide a valid cost character for continuous target variable")}
+  
   if(vartype=="binary"&cost!="accuracy"&cost!="cross_entropy"&cost!="sen"&cost!="spec"
      &cost!="f1"&cost!="precision"){stop("Error... Please provide a valid cost character for binary target variable")}
+     
   if(cost =="cor"|cost == "precision"| cost == "sen" | cost == "spec" | cost == "f1"| cost == "accuracy"){argmax = T}else{argmax=F}
+  
   if (verbose == T){welcome()}
   
   #----------------------------------------------------------------------------------------#
@@ -287,6 +313,7 @@ isvr.GA = function(Y, X, Z, D, w = w, hyper,tgTrait, ngen, popsize, mut_rate, cr
   
   #--------------------------------------------------------
   #Building the hyperparameter space
+  
   if(ntrait>1){
     nb = ntrait*(ntrait+1)/2
     nr = ntrait*(ntrait+1)/2 - ntrait
@@ -295,6 +322,7 @@ isvr.GA = function(Y, X, Z, D, w = w, hyper,tgTrait, ngen, popsize, mut_rate, cr
     hyper_dic = c("C","eps",band_id,r_id)}else{hyper_dic = c("C","eps","b1");nb=1}
   
   hyperspace = list()
+  
   for (i in 1:length(hyper_dic)){
     par = hyper[[i]]
     if(sum(as.numeric(par[1] == hyper_dic))==1){
@@ -304,21 +332,27 @@ isvr.GA = function(Y, X, Z, D, w = w, hyper,tgTrait, ngen, popsize, mut_rate, cr
       hyperspace[[i]] = c(seq(start,end,interval))
     }
   }
+  
   bin_size = 0
   for (i in 1:length(hyperspace)){bin_size = bin_size+log(length(hyperspace[[i]]),2)}
   n_par = length(hyper_dic)
   
   
   #Building the EDMs
+  
+  
   if (missing(D)==T){
+  
     if(verbose==T){
       cat('Computing EDMs...', '\n')
       ini = Sys.time()}
+      
     if(missing(w)==T){
       D = list()
       D[[1]] = qmtsvr.dist(X, verbose = F, scale = T, u = 2, vardiag = vardiag); rm(X)
     }else{
       D = list()
+      
       for(j in 1:nb){
         D[[j]] = qmtsvr.dist(X,w[[j]],verbose = F, scale = T, u = 2, vardiag=vardiag)};rm(X)}
     if(verbose==T){
@@ -327,13 +361,17 @@ isvr.GA = function(Y, X, Z, D, w = w, hyper,tgTrait, ngen, popsize, mut_rate, cr
       a=utils::capture.output(fim-ini)
       cat('Time elapsed:', substr(a, 19, 100), '\n')}
   }
+  
   #---------------------------- End of subroutine ----------------------------------------#
   
   #----------------------------------------------------------------------------------------#
+  
   #-This function computes the cost function for the GA -----------------------------------#
+  
   #----------------------------------------------------------------------------------------#
   
   fun_fit = function(x){
+    
     xp = x
     genes = list()
     for(i in 1:length(hyper_dic)){
@@ -399,16 +437,19 @@ isvr.GA = function(Y, X, Z, D, w = w, hyper,tgTrait, ngen, popsize, mut_rate, cr
   #--------------------- End of subroutine ------------------------------------------------------#
   
   #-------------------- Selects the best n individuals -------------------------------------#
+ 
   whichpart <- function(x, n, argmax) {
     ind = order(x, decreasing = argmax)[1:n]
   }
   
   #-------------- The crossing-over function --------------------------#
   cross_over = function(population, mut_rate, cross_rate, tsize, elitism, score){
+  
     popsize =  nrow(population)
     nchildren = popsize - elitism
     chr_len = dim(population)[2]
     children = NULL
+    
     for (i in 1:nchildren){
       #Tournament selection
       index1 = sample(popsize, tsize, replace = F)
@@ -438,19 +479,25 @@ isvr.GA = function(Y, X, Z, D, w = w, hyper,tgTrait, ngen, popsize, mut_rate, cr
     elit =  whichpart(score, n = elitism, argmax = argmax)
     children = rbind(children,population[elit,])
     return (children)}
+    
   #--------------------- End of subroutine ----------------------------#
   
   #------------ Create the population for generation 0 ----------------#
+  
   for (i in 1:popsize){
     pop = rbind(pop,matrix(rbinom(n=bin_size, prob = 0.5, size = 1),1,bin_size))}
-  
+
+
   if(val_pop=="cross"){
+  
     folds = sample(1:nfolds,N,replace = T)
     folds[which(is.na(Y[,tgTrait]))] = nfolds+1
   }else if(val_pop=="custom"){
+   
     folds = custom_val; holdout = 1
   }else if (val_pop=="closest"){
     target = which(is.na(Y[,tgTrait]))
+    
     train_ind = NULL
     for (z in 1:length(target)){
       ind = target[z]
@@ -471,6 +518,7 @@ isvr.GA = function(Y, X, Z, D, w = w, hyper,tgTrait, ngen, popsize, mut_rate, cr
   }
   
   #------------ Begin looping for the n generations -------------------#
+  
   if (verbose == T){
     ini = Sys.time()
     cat('#------------ Starting GA generations!-----------------#')
@@ -487,7 +535,9 @@ isvr.GA = function(Y, X, Z, D, w = w, hyper,tgTrait, ngen, popsize, mut_rate, cr
   }
   
   MR=mut_rate
+  
   CR=cross_rate
+  
   while (gen <= ngen){
     tryCatch({
       score = NULL
@@ -545,6 +595,7 @@ isvr.GA = function(Y, X, Z, D, w = w, hyper,tgTrait, ngen, popsize, mut_rate, cr
     fim = Sys.time()
     a=utils::capture.output(fim-ini)
     cat('Time elapsed:', substr(a, 19, 100), '\n')}
+    
   if (dopar == T){stopCluster(cl=my.cluster)}
   
   GA_parameters = data.frame(Parameter = c('Number of generations','Population size',
@@ -565,29 +616,45 @@ isvr.GA = function(Y, X, Z, D, w = w, hyper,tgTrait, ngen, popsize, mut_rate, cr
  ####Given phenotype(y), covariates(X), interactions(S)
 
   hyper_st = list(c("C",0.1,4,128), c("eps",0.0001,0.1,128), c("b1",0.2,5,128))
+  
   isvr <- isvr.GA(Y = as.matrix(y),X = as.matrix(S), Z = as.matrix(X), hyper = hyper_st,
                   ngen = 10, popsize = 20, mut_rate = 0.05,
                   cross_rate = 0.9, elitism = 2,
                   cost = "cor",tsize = 4,val_pop = "cross",
                   nfolds = 3,vardiag=F,verbose = F)
+                  
   hyper <- as.list(isvr$set_hyper)
+  
   names(hyper) <- names(isvr$set_hyper)
+  
   Q <- isvr.Q(Y=as.matrix(y), X = as.matrix(S), set_hyper = hyper, 
               verbose = F, vardiag = F)
+              
   Y_test <- as.matrix(y)
   
+  
   #######Davies method
+  
   I <- matrix(1,nrow(Y_test),1) 
+  
   IX <- cbind(I, X)
+  
   b <- solve(t(IX) %*% IX) %*% t(IX) %*% Y_test
   
   A <- IX %*% solve(t(IX)%*%IX) %*% t(IX)
+  
   sigma0 <- (nrow(Y_test)-sum(diag(A)))^(-1) * t(Y_test-IX%*%b) %*% (Y_test-IX%*%b)
+  
   x0 <- ((2*sigma0)^(-1))*(t(Y_test-IX%*%b) %*% Q %*% (Y_test-IX%*%b))
+  
   P0 <- diag(nrow(Y_test))-(IX %*%solve(t(IX) %*% IX) %*% t(IX))
+  
   svd_P0 <- svd(P0)
+  
   P.sqrt <- svd_P0$u %*% diag(sqrt(svd_P0$d)) %*% t(svd_P0$v)  
+  
   R = P.sqrt %*% (0.5 * (Q)) %*% P.sqrt
+  
   si = eigen(R, only.values = T)$values
 
   p<- CompQuadForm::davies(as.numeric(x0), si, rep(1, length(si)))$Qq
