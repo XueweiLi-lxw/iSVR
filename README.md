@@ -49,6 +49,8 @@ library(MASS)
 4. Function
 
 #-------------------------------------------------------------------------------------------#
+
+
 isvr.fit = function(Y, X, Z, w, set_hyper, D, verbose, vardiag){
   
   #--- Requirement checking! ---#
@@ -179,7 +181,12 @@ isvr.fit = function(Y, X, Z, w, set_hyper, D, verbose, vardiag){
 }
 
 
+
+
 #--------------------------------------------------------------------#
+
+
+
 isvr.GA = function(Y, X, Z, D, w = w, hyper,tgTrait, ngen, popsize, mut_rate, cross_rate, elitism, vartype = vartype,
                      verbose, cost, nfolds, val_pop, tsize, custom_val, k, MRCR, vardiag, lambda, dopar){
   if(missing(dopar)==T){dopar=F}
