@@ -546,6 +546,41 @@ isvr.GA = function(Y, X, Z, D, w = w, hyper,tgTrait, ngen, popsize, mut_rate, cr
 }
 
 
+5. TEST EXAMPLE
+ ####Given phenotype(y), covariates(X), interactions(S)
+
+  hyper_st = list(c("C",0.1,4,128), c("eps",0.0001,0.1,128), c("b1",0.2,5,128))
+  isvr <- isvr.GA(Y = as.matrix(y),X = as.matrix(S), Z = as.matrix(X), hyper = hyper_st,
+                  ngen = 10, popsize = 20, mut_rate = 0.05,
+                  cross_rate = 0.9, elitism = 2,
+                  cost = "cor",tsize = 4,val_pop = "cross",
+                  nfolds = 3,vardiag=F,verbose = F)
+  hyper <- as.list(isvr$set_hyper)
+  names(hyper) <- names(isvr$set_hyper)
+  Q <- isvr.Q(Y=as.matrix(y), X = as.matrix(S), set_hyper = hyper, 
+              verbose = F, vardiag = F)
+  Y_test <- as.matrix(y)
+  
+  #######Davies method
+  I <- matrix(1,nrow(Y_test),1) 
+  IX <- cbind(I, X)
+  b <- solve(t(IX) %*% IX) %*% t(IX) %*% Y_test
+  
+  A <- IX %*% solve(t(IX)%*%IX) %*% t(IX)
+  sigma0 <- (nrow(Y_test)-sum(diag(A)))^(-1) * t(Y_test-IX%*%b) %*% (Y_test-IX%*%b)
+  x0 <- ((2*sigma0)^(-1))*(t(Y_test-IX%*%b) %*% Q %*% (Y_test-IX%*%b))
+  P0 <- diag(nrow(Y_test))-(IX %*%solve(t(IX) %*% IX) %*% t(IX))
+  svd_P0 <- svd(P0)
+  P.sqrt <- svd_P0$u %*% diag(sqrt(svd_P0$d)) %*% t(svd_P0$v)  
+  R = P.sqrt %*% (0.5 * (Q)) %*% P.sqrt
+  si = eigen(R, only.values = T)$values
+
+  p<- CompQuadForm::davies(as.numeric(x0), si, rep(1, length(si)))$Qq
+
+
+
+
+
 
 
 Reference
