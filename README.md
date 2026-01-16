@@ -203,41 +203,66 @@ isvr.fit = function(Y, X, Z, w, set_hyper, D, verbose, vardiag){
 isvr.GA = function(Y, X, Z, D, w = w, hyper,tgTrait, ngen, popsize, mut_rate, cross_rate, elitism, vartype = vartype,
                      verbose, cost, nfolds, val_pop, tsize, custom_val, k, MRCR, vardiag, lambda, dopar){
   if(missing(dopar)==T){dopar=F}
+  
   if(typeof(dopar)!="logical"){stop("Error ... dopar parameter must be T or F")}
+  
   if(dopar == T){
     require("foreach")
     require("parallel")
     require("doParallel")
   }
+  
   require ("kernlab")
   
   Y = Y 
+  
   if(missing(X)==T){X=NULL
+  
   }else{X = X; nsnp = ncol(X)}
+  
   if(missing(Z)==T){Z=NULL
+  
   }else{Z = Z; ncov = ncol(Z)}
   
   N = nrow(Y)
   
   if(missing(tgTrait)==T){tgTrait=1}
+  
   if(missing(verbose)==T){verbose=NULL}
+  
   if(missing(nfolds)==T){nfolds=NULL}
+  
   if(missing(tsize)==T){tsize = 5}
+  
   if(missing(lambda)==T){lambda = 0}
+  
   if(missing(elitism)==T){elitism = 1}
+  
   if(missing(vartype)==T){vartype = "continuous"}
+  
   if(vartype!="continuous"&vartype!="binary"){stop("Error: vartype must be 'continuous' or 'binary'...")}
+  
   if(missing(MRCR)==T){MRCR="fixed"}
+  
   if(MRCR!="fixed"&MRCR!="dynamic"){stop("Error MCRC must be 'fixed' or 'dynamic'...")}
+  
   if(missing(vardiag)==T){vardiag = F}
+  
   if(typeof(vardiag)!="logical"){stop("Error ... vardiag must be T or F")}
   
   #*******************************************************************#
+  
   #*                  NESTED FUNCTIONS                               *#
+  
   #*******************************************************************#
+  
   #1.cost metrics
+  
   #Classification
+
+  
   class_metrics = function(df, t){
+  
     if(missing(t)==T){t=0.5}
     db = data.frame(df)
     db[,2] = ifelse(db[,2]>=t,1,0)
@@ -306,8 +331,11 @@ isvr.GA = function(Y, X, Z, D, w = w, hyper,tgTrait, ngen, popsize, mut_rate, cr
   if (verbose == T){welcome()}
   
   #----------------------------------------------------------------------------------------#
+  
   #-------------------------   Data pre-processing   --------------------------------------#
+  
   #----------------------------------------------------------------------------------------#
+  
   ntrait = ncol(Y)
   
   
@@ -315,6 +343,7 @@ isvr.GA = function(Y, X, Z, D, w = w, hyper,tgTrait, ngen, popsize, mut_rate, cr
   #Building the hyperparameter space
   
   if(ntrait>1){
+  
     nb = ntrait*(ntrait+1)/2
     nr = ntrait*(ntrait+1)/2 - ntrait
     band_id = paste("b",seq(1,nb,1), sep = "")
@@ -324,6 +353,7 @@ isvr.GA = function(Y, X, Z, D, w = w, hyper,tgTrait, ngen, popsize, mut_rate, cr
   hyperspace = list()
   
   for (i in 1:length(hyper_dic)){
+  
     par = hyper[[i]]
     if(sum(as.numeric(par[1] == hyper_dic))==1){
       start = as.numeric(par[2])
@@ -592,6 +622,7 @@ isvr.GA = function(Y, X, Z, D, w = w, hyper,tgTrait, ngen, popsize, mut_rate, cr
       stop()
     })}
   if (verbose == T){
+  
     fim = Sys.time()
     a=utils::capture.output(fim-ini)
     cat('Time elapsed:', substr(a, 19, 100), '\n')}
