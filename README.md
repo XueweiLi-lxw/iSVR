@@ -62,7 +62,9 @@ library(MASS)
 isvr.fit = function(Y, X, Z, w, set_hyper, D, verbose, vardiag){
   
   #--- Requirement checking! ---#
+  
   caution()
+  
   #-----------------------------#
   
   #--------- Normalizes y to lie between 0 and 1 ----------------------#
@@ -74,7 +76,9 @@ isvr.fit = function(Y, X, Z, w, set_hyper, D, verbose, vardiag){
   }
   
   y = NULL
+  
   ntrait = ncol(Y)
+  
   N = nrow(Y)
   
   if (missing(verbose)==T){verbose=F}
@@ -95,6 +99,7 @@ isvr.fit = function(Y, X, Z, w, set_hyper, D, verbose, vardiag){
     hyper_dic = c("C","eps",band_id,r_id)}else{hyper_dic = c("C","eps","b1");nb=1}
   
   #Checking the sequence of provided hyperparameters
+  
   for (i in 1:length(hyper_dic)){
     if(names(set_hyper)[i]!=hyper_dic[i]){
       stop("Invalid hyperparameters list provided")}}
@@ -103,6 +108,7 @@ isvr.fit = function(Y, X, Z, w, set_hyper, D, verbose, vardiag){
   bandwidth = set_hyper[3:(2+nb)]
   
   if (missing(D)==T){
+  
     if(verbose==T){
       cat('#--| Euclidean Distance Matrices (EDM) not provided |--#', '\n')
       cat('Computing EDMs...', '\n')}
@@ -122,24 +128,37 @@ isvr.fit = function(Y, X, Z, w, set_hyper, D, verbose, vardiag){
   }
   
   #Building the kernel blocks
+  
   if (verbose==T){
+  
     cat('Building the kernel blocks...', '\n')}
+    
   nD = length(D)
+  
   if (nD>1&nD!=nb){stop("Error! Number of EMDs do not match number of bandwidth parameters")}
+  
   K = list()
+  
   if (nD == 1){
+  
     for (i in 1:nb){
-      K[[i]] = exp(-1*bandwidth[[i]]*D[[1]])}
-  }else{
+      K[[i]] = exp(-1*bandwidth[[i]]*D[[1]])}  }else{
+  
     for (i in 1:nb){
       K[[i]] = exp(-1*bandwidth[[i]]*D[[i]])}}
   
   #Getting the indexes for building Q
+  
   ind = matrix(0, nrow = ntrait,ntrait)
+  
   j=1
+  
   first = 1
+  
   last = ntrait
+  
   for (i in 1:nrow(ind)){
+  
     doseq = seq(first,last,1)
     ind[i,j:ncol(ind)] = doseq
     first = seq(first,last,1)[length(seq(first,last,1))]+1
@@ -147,20 +166,28 @@ isvr.fit = function(Y, X, Z, w, set_hyper, D, verbose, vardiag){
     last = first + ncol(ind) - j}
   
   index = c(ind[upper.tri(ind, diag = F)])
+  
   ind2 = t(ind)
+  
   diag(ind2) = 0
+  
   ind = ind + ind2
+  
   rm(ind2)
   
   if(ntrait>1){
+  
     phi = set_hyper[(nb+3):(nb+2+nr)]
     for (i in 1:length(index)){
       K[[index[i]]] = phi[[i]]*K[[index[i]]]}
   }
   
   L = list()
+  
   Krow = NULL
+  
   for (i in 1:nrow(ind)){
+  
     ki = ind[i,]
     for (o in 1:length(ki)){
       v = ki[o]
@@ -170,19 +197,30 @@ isvr.fit = function(Y, X, Z, w, set_hyper, D, verbose, vardiag){
   }
   
   Q = NULL
+  
   for (i in 1:length(L)){Q = rbind(Q,L[[i]])}
+  
   z = as.matrix(normalize(Z))
+  
   Q1 = z %*% t(z)
+  
   Qc = as.matrix(Q1)+as.matrix(Q)
+  
   if (verbose == T){cat('Done...', '\n')}
+  
   mod = ksvm(Qc, y, kernel = 'matrix',
              type = "eps-svr", C = set_hyper[[1]], e = set_hyper[[2]])
   
   yhat = predict(mod)
+  
   YHAT = matrix(0,nrow = N, ncol = ntrait)
+  
   ni = 0
+  
   nf = 0
+  
   for (i in 1:ntrait){
+  
     max_train = max(Y[,i], na.rm = T)
     min_train = min(Y[,i], na.rm = T)
     yhat1 = (max_train - min_train)*yhat[(1+ni):(nf+N)] + min_train
@@ -190,6 +228,7 @@ isvr.fit = function(Y, X, Z, w, set_hyper, D, verbose, vardiag){
     nf = nf+N
     YHAT[,i] = yhat1
   }
+  
   return(YHAT)
 }
 
@@ -202,6 +241,7 @@ isvr.fit = function(Y, X, Z, w, set_hyper, D, verbose, vardiag){
 
 isvr.GA = function(Y, X, Z, D, w = w, hyper,tgTrait, ngen, popsize, mut_rate, cross_rate, elitism, vartype = vartype,
                      verbose, cost, nfolds, val_pop, tsize, custom_val, k, MRCR, vardiag, lambda, dopar){
+                     
   if(missing(dopar)==T){dopar=F}
   
   if(typeof(dopar)!="logical"){stop("Error ... dopar parameter must be T or F")}
@@ -288,7 +328,9 @@ isvr.GA = function(Y, X, Z, D, w = w, hyper,tgTrait, ngen, popsize, mut_rate, cr
                 sensitivity = sensitivity, specificity = specificity, f1 = f1))
     
   }
+  
   #Regression
+  
   reg_metrics = function(y, yhat){
     acc = cor(yhat, y)
     rmse = sqrt(mean((yhat - y)^2))
@@ -297,6 +339,7 @@ isvr.GA = function(Y, X, Z, D, w = w, hyper,tgTrait, ngen, popsize, mut_rate, cr
   }
   
   #Convert a binary array to an integer value
+  
   BinToDec <- function(x){
     sum(2^(which(rev(unlist(strsplit(as.character(x), "")) == 1))-1))+1
   }
@@ -340,6 +383,7 @@ isvr.GA = function(Y, X, Z, D, w = w, hyper,tgTrait, ngen, popsize, mut_rate, cr
   
   
   #--------------------------------------------------------
+  
   #Building the hyperparameter space
   
   if(ntrait>1){
@@ -364,12 +408,12 @@ isvr.GA = function(Y, X, Z, D, w = w, hyper,tgTrait, ngen, popsize, mut_rate, cr
   }
   
   bin_size = 0
+  
   for (i in 1:length(hyperspace)){bin_size = bin_size+log(length(hyperspace[[i]]),2)}
+  
   n_par = length(hyper_dic)
   
-  
   #Building the EDMs
-  
   
   if (missing(D)==T){
   
@@ -469,10 +513,12 @@ isvr.GA = function(Y, X, Z, D, w = w, hyper,tgTrait, ngen, popsize, mut_rate, cr
   #-------------------- Selects the best n individuals -------------------------------------#
  
   whichpart <- function(x, n, argmax) {
+  
     ind = order(x, decreasing = argmax)[1:n]
   }
   
   #-------------- The crossing-over function --------------------------#
+  
   cross_over = function(population, mut_rate, cross_rate, tsize, elitism, score){
   
     popsize =  nrow(population)
@@ -521,11 +567,10 @@ isvr.GA = function(Y, X, Z, D, w = w, hyper,tgTrait, ngen, popsize, mut_rate, cr
   if(val_pop=="cross"){
   
     folds = sample(1:nfolds,N,replace = T)
-    folds[which(is.na(Y[,tgTrait]))] = nfolds+1
-  }else if(val_pop=="custom"){
+    folds[which(is.na(Y[,tgTrait]))] = nfolds+1 }else if(val_pop=="custom"){
    
-    folds = custom_val; holdout = 1
-  }else if (val_pop=="closest"){
+    folds = custom_val; holdout = 1}else if (val_pop=="closest"){
+  
     target = which(is.na(Y[,tgTrait]))
     
     train_ind = NULL
@@ -550,17 +595,20 @@ isvr.GA = function(Y, X, Z, D, w = w, hyper,tgTrait, ngen, popsize, mut_rate, cr
   #------------ Begin looping for the n generations -------------------#
   
   if (verbose == T){
+  
     ini = Sys.time()
     cat('#------------ Starting GA generations!-----------------#')
     cat('\n')}
   
   if (dopar == T){
+  
     n.cores <- parallel::detectCores() - 1
     my.cluster <- parallel::makeCluster(
       n.cores,
       type = "FORK")
     #Register the cluster
     doParallel::registerDoParallel(cl = my.cluster)
+    
     if (verbose == T){cat("\n", "Number of registered cores:", foreach::getDoParWorkers(), "\n" )}
   }
   
@@ -569,6 +617,7 @@ isvr.GA = function(Y, X, Z, D, w = w, hyper,tgTrait, ngen, popsize, mut_rate, cr
   CR=cross_rate
   
   while (gen <= ngen){
+  
     tryCatch({
       score = NULL
       hypercomb = list()
