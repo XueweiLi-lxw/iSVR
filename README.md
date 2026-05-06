@@ -707,37 +707,43 @@ isvr.GA = function(Y, X, Z, D, w = w, hyper,tgTrait, ngen, popsize, mut_rate, cr
   
   names(hyper) <- names(isvr$set_hyper)
   
-  Q <- isvr.Q(Y=as.matrix(y), X = as.matrix(S), set_hyper = hyper, 
-              verbose = F, vardiag = F)
-              
-  Y_test <- as.matrix(y)
-  
-  
-  #######Davies method
-  
-  I <- matrix(1,nrow(Y_test),1) 
-  
-  IX <- cbind(I, X)
-  
-  b <- solve(t(IX) %*% IX) %*% t(IX) %*% Y_test
-  
-  A <- IX %*% solve(t(IX)%*%IX) %*% t(IX)
-  
-  sigma0 <- (nrow(Y_test)-sum(diag(A)))^(-1) * t(Y_test-IX%*%b) %*% (Y_test-IX%*%b)
-  
-  x0 <- ((2*sigma0)^(-1))*(t(Y_test-IX%*%b) %*% Q %*% (Y_test-IX%*%b))
-  
-  P0 <- diag(nrow(Y_test))-(IX %*%solve(t(IX) %*% IX) %*% t(IX))
-  
-  svd_P0 <- svd(P0)
-  
-  P.sqrt <- svd_P0$u %*% diag(sqrt(svd_P0$d)) %*% t(svd_P0$v)  
-  
-  R = P.sqrt %*% (0.5 * (Q)) %*% P.sqrt
-  
-  si = eigen(R, only.values = T)$values
+ Q <- isvr.Q(Y=as.matrix(y), X = as.matrix(S), set_hyper = hyper, 
+            verbose = F, vardiag = F)
+            
+Y_test <- as.matrix(normalize(y))
 
-  p<- CompQuadForm::davies(as.numeric(x0), si, rep(1, length(si)))$Qq
+#######Score Test under iSVR (M-estimate)### 
+
+##### Davies method#########
+I <- matrix(1,nrow(Y_test),1) 
+
+X_nor <- normalize(X)
+
+IX <- cbind(I, X_nor)
+
+P0 <- diag(nrow(IX)) - IX %*% ginv(crossprod(IX)) %*% t(IX)
+
+Q1 = X_nor %*% t(X_nor)   #Q1 <- tcrossprod(z)   
+
+mod = ksvm(Q1, Y_test, kernel = 'matrix',
+           type = "eps-svr", C = hyper[[1]], e = hyper[[2]])
+
+yhat = predict(mod)
+
+r <- Y_test - yhat
+
+epsilon = hyper[[2]]
+
+psi0 <- ifelse(abs(r) > epsilon, sign(r), 0)
+
+T0 <- ((mean(psi0^2))^(-1))*(t(psi0) %*% P0 %*% Q %*% P0 %*% psi0)
+
+R = P0 %*% Q %*% P0
+
+
+si = eigen(R, only.values = T)$values
+
+p<- CompQuadForm::davies(as.numeric(x0), si, rep(1, length(si)))$Qq
 
 
 
