@@ -47,6 +47,8 @@ library(kernlab)
 
 library(MASS)
 
+
+
 4.TEST EXAMPLE
 
  ####Given phenotype(y), covariates(X), interactions(S)
