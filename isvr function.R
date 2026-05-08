@@ -3,7 +3,41 @@ library(CompQuadForm)
 library(usethis)
 library(devtools)
 library(kernlab)
+library(MASS)
 #install.packages("fassoc", repos="http://R-Forge.R-project.org")
+
+Q <- isvr.Q(Y=as.matrix(y), X = as.matrix(S), set_hyper = hyper, 
+            verbose = F, vardiag = F)
+Y_test <- as.matrix(normalize(y))
+
+#######Score Test under iSVR (M-estimate)### 
+##### Davies method#########
+I <- matrix(1,nrow(Y_test),1) 
+X_nor <- normalize(X)
+IX <- cbind(I, X_nor)
+P0 <- diag(nrow(IX)) - IX %*% ginv(crossprod(IX)) %*% t(IX)
+
+Q1 = X_nor %*% t(X_nor)   #Q1 <- tcrossprod(z)   
+mod = ksvm(Q1, Y_test, kernel = 'matrix',
+           type = "eps-svr", C = hyper[[1]], e = hyper[[2]])
+
+#coef_sv <- mod@coef          
+#sv_idx  <- mod@SVindex       
+#X_sv <- X_nor[sv_idx, , drop = FALSE]
+#beta <- t(X_sv) %*% coef_sv 
+#b1 <- -(mod@b)
+#r <- Y_test- b1*I -X_nor %*% beta
+yhat = predict(mod)
+
+r <- Y_test - yhat
+epsilon = hyper[[2]]
+
+psi0 <- ifelse(abs(r) > epsilon, sign(r), 0)
+
+T0 <- ((mean(psi0^2))^(-1))*(t(psi0) %*% P0 %*% Q %*% P0 %*% psi0)
+R = P0 %*% Q %*% P0
+si = eigen(R, only.values = T)$values
+pv = davies(as.numeric(T0), si, rep(1, length(si)))$Qq
 
 
 
@@ -13,7 +47,44 @@ normalize <- function(x) {
   denom <- max(x, na.rm = T) - min(x, na.rm = T)
   return (num/denom)
 }
+#normalize <- function(x) {
+#  mu <- mean(x, na.rm = TRUE)
+#  sd_x <- sd(x, na.rm = TRUE)
 
+#  if (is.na(sd_x) || sd_x == 0) {
+#    return(rep(0, length(x)))   
+#  } else {
+#    return((x - mu) / sd_x)
+#  }
+#}
+###column-wise min–max normalization
+normalize_col <- function(X) {
+  X <- as.matrix(X)
+  X_nor <- apply(X, 2, function(x) {
+    rng <- max(x, na.rm = TRUE) - min(x, na.rm = TRUE)
+    if (rng == 0) {
+      return(rep(0, length(x)))   
+    } else {
+      return((x - min(x, na.rm = TRUE)) / rng)
+    }
+  })
+  return(as.matrix(X_nor))
+}
+
+#normalize_col <- function(X) {
+#  X <- as.matrix(X)
+#  X_std <- apply(X, 2, function(x) {
+#    mu <- mean(x, na.rm = TRUE)
+#    sd_x <- sd(x, na.rm = TRUE)
+
+#    if (is.na(sd_x) || sd_x == 0) {
+#      return(rep(0, length(x)))   # 常数列返回0
+#    } else {
+#      return((x - mu) / sd_x)
+#    }
+#  })
+#  return(as.matrix(X_std))
+#}
 
 isvr.Q = function(Y, X, w, set_hyper, D, verbose, vardiag){
   
@@ -799,145 +870,3 @@ caution = function(){
 #-------------------#
 #  END of program   #
 #-------------------#
-
-## ---------------------------
-##  weighting
-## ---------------------------
-make_weighted_S <- function(S, MAF, maf_cut = 0.05, eps = 1e-8) {
-  S   <- as.matrix(S)
-  MAF <- as.numeric(MAF)
-  
-  if (length(MAF) != ncol(S)) {
-    stop("length(MAF) must equal ncol(S).")
-  }
-  
-  MAF <- pmax(pmin(MAF, 0.5 - eps), eps)
-  
-  rare_idx   <- MAF < maf_cut
-  common_idx <- !rare_idx
-  
-  w <- numeric(length(MAF))
-  
-  ## rare: Beta(1,25)
-  if (any(rare_idx)) {
-    w[rare_idx] <- dbeta(MAF[rare_idx], 1, 25)
-  }
-  
-  ## common: Beta(0.5,0.5)
-  if (any(common_idx)) {
-    w[common_idx] <- 1
-    #w[common_idx] <- dbeta(MAF[common_idx], 0.5, 0.5)
-  }
-  
-  S_w <- sweep(S, 2, sqrt(w), "*")
-  return(S_w)
-}
-## ---------------------------
-#----------------END----------------#
-
-
-
-
-
-
-########other methods########
-###load iSKAT (GESAT&iSKAT)
-install.packages("penalized")
-install.packages("devtools")
-library(devtools)
-install.packages("SKAT")
-#install.packages("D:/文献/methods/iSKAT/iSKAT_1.1.tar.gz", repos = NULL, type = "source")
-install.packages("E:/iSVR_code_revised/iSKAT&GESAT/iSKAT_1.1.tar.gz", repos = NULL, type = "source")
-
-install.packages("iSKAT", dependencies = TRUE)
-
-library(survival)
-library(penalized)
-library(RSpectra)
-library(SPAtest)
-library(Matrix)
-library(MASS)
-library(SKAT)
-library(iSKAT)
-#setwd("D:/文献/methods/iSKAT&GESAT")
-setwd("E:/iSVR_code_revised/iSKAT&GESAT")
-
-source("Main_GESAT.R")
-source("Main_iSKAT.R")
-source("iSKAT-Linear-v4.R")
-source("iSKAT-Logistic-v3.R")
-source("Main_SSD_GESAT.R")
-source("Main_SSD_iSKAT.R")
-source("GxE-scoretest-snpset-v12.R")
-source("GxE-scoretest-logistic-snpset-v22.R")
-
-
-###(VW_)TOW_GE
-TOW_GE=function(y,x,numper)
-{
-  ee=0.000001
-  T1per=rep(0,numper)
-  m=ncol(x)
-  aa=apply(x,2,var)+ee
-  T1=sum(cov(y,x)^2/aa)
-  for(i in 1:numper)
-  {
-    yper=sample(y)
-    T1per[i]=sum(cov(yper,x)^2/aa)
-  }
-  pv=sum(T1per>T1)/numper
-  return(pv)
-}
-VW_TOW_GE=function(y,x,z,q0,numper) 
-{
-  ee=0.000001
-  m=ncol(x)
-  n=nrow(x)
-  q=colMeans(z)/2
-  a0=which(q<q0)
-  x0=x
-  #############################
-  T1per=rep(0,numper)
-  x1=x=x0[,a0]
-  aa1=aa=apply(x,2,var)+ee
-  T1=sum(cov(y,x)^2/aa)
-  #############################
-  T2per=rep(0,numper)
-  x=x0[,-a0]
-  nn=ncol(x0)-length(a0)
-  if(nn==1)aa=var(x)+ee
-  else aa=apply(x,2,var)+ee
-  T2=sum(cov(y,x)^2/aa)
-  for(i in 1:numper)
-  {
-    yper=sample(y)
-    T2per[i]=sum(cov(yper,x)^2/aa)
-    T1per[i]=sum(cov(yper,x1)^2/aa1)
-  }
-  ##############################
-  mm=20
-  sd1=sd(T1per)
-  sd2=sd(T2per)
-  T1=c(T1,T1per)/sd1
-  T2=c(T2,T2per)/sd2
-  lambda=c(0:mm)/mm
-  T=T1%*%t(1-lambda)+T2%*%t(lambda)
-  T0=apply(T,2,rank)
-  T=apply(T0,1,max)		
-  pv=sum(T[2:(numper+1)]>T[1])/numper+sum(T[2:(numper+1)]==T[1])/numper/2
-  return(pv)
-}
-
-
-####CKLRT
-install.packages("devtools")  
-library(devtools)  
-install_github("andrewhaoyu/CKLRT")
-library(CKLRT)
-library(mgcv)
-library(MASS)
-library(nlme)
-library(compiler)
-library(Rcpp)
-library(RcppEigen)
-library(CKLRT)
