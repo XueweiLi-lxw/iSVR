@@ -54,7 +54,7 @@ library(MASS)
 
 
 
-4.TEST EXAMPLE
+4. TEST EXAMPLE
 
  ####Given phenotype(y), covariates(X), interactions(S)
 
