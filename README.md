@@ -56,13 +56,14 @@ library(MASS)
 
 4. TEST EXAMPLE
 
- ####Given phenotype(y), covariates(X), interactions(S)
+ ###Given phenotype(y), covariates(X), interactions(S)
+ #This assumes that the necessary functions are already present in the runtime environment!!!#
 
   hyper_st = list(c("C",0.1,4,128), c("eps",0.0001,0.01,128), c("b1",0.2,5,128))
 
   isvr <- isvr.GA(Y = as.matrix(y),X = as.matrix(S), Z = as.matrix(X), hyper = hyper_st,
                   ngen = 10, popsize = 20, mut_rate = 0.05,
-                  cross_rate = 0.9, elitism = 2,
+                  cross_rate = 0.95, elitism = 2,
                   cost = "cor",tsize = 4,val_pop = "cross",
                   nfolds = 3,vardiag=F,verbose = F)
   
