@@ -8,14 +8,19 @@ This project improves upon the QMTSVR model proposed by Alves et al. (2023) by p
 
 
 1. Core Functions
+   
 isvr.GA: Uses genetic algorithm to find optimal hyperparameters for the iSVR model
 
 isvr.fit: Trains the iSVR model using optimized hyperparameters
 
-Interaction Detection: Significance testing for interaction effects based on Score test and Davies algorithm
+qmtsvr.dist is derived from the qmtsvr package functions
+
+Interaction Detection: The iSVR testing process utilizes a score test based on M-estimation theory to assess the significance of interactions, and computes p‑values using the Davies method.
+
 
 
 2. Environment Requirements
+
 Encoding: UTF-8
 
 Dependencies:
